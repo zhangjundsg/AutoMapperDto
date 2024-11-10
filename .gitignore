@@ -1,0 +1,69 @@
+# Visual Studio相关
+.vscode/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# 编译输出文件夹
+bin/
+obj/
+build/
+[Bb]uild[Ll]og.*
+
+# NuGet 包
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+
+# DotNetCore/Roslyn
+project.lock.json
+artifacts/
+
+# 临时文件
+*_i.c
+*_p.c
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tmp
+*.log
+*.vspscc
+*.vssscc
+
+# 其他配置文件
+*.config
+*.debug
+*.release
+*.ide/
+*.dotsettings
+*.testsettings
+*.vsconfig
+
+# Rider IDE相关
+.idea/
+*.sln.iml
+
+# 报告和日志
+TestResult/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Entity Framework Migrations
+migrations/
+
+# Mac相关文件
+.DS_Store
