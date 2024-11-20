@@ -38,16 +38,19 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
     {
         // 获取 Mapper<T> 属性
         var mapperAttribute = _syntaxHandler.GetMapperAttribute(syntax);
-
+        
         if (mapperAttribute == null)
             return default;
+
+        var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
+
 
         // 提取泛型类型名
         var genericTypeName = _syntaxHandler.GetGenericTypeFromMapperAttribute(mapperAttribute);
 
         if (genericTypeName == null)
             return default;
-
+        
         // 获取 T 类型的非私有属性
         //var properties = _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName);
         foreach (var item in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName))
