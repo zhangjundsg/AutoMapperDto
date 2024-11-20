@@ -2,7 +2,8 @@ using System;
 
 namespace AutoMapperDto;
 
-public sealed class Mapper : Attribute
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+public sealed class Mapper<T> : Attribute
 {
 
 }
