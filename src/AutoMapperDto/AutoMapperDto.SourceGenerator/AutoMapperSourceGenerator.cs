@@ -61,9 +61,7 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
         // 获取 T 类型的公共属性
         foreach (var property in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName).Where(o=>o.DeclaredAccessibility == Accessibility.Public ))
         {
-            var propertyName = property.Name;
-            var propertyType = property.Type.ToDisplayString();
-            text.AppendLine($@"   public {propertyType} {propertyName} {{ get; set;}}");
+            text.AppendLine($@"   public {property.Name} {property.Type.ToDisplayString()} {{ get; set;}}");
         }
         text.AppendLine("}");
 
