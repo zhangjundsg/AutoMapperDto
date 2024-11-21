@@ -15,4 +15,4 @@ public sealed partial class MyClassDto;
 
 实体需要用`partial`关键字修饰为分部类,没关键字IDE会给出提示：
 
-![tips](https://github.com/zhangjundsg/zhangjundsg/blob/main/tips.png,"tips")
+![tips](https://github.com/zhangjundsg/zhangjundsg/blob/main/tips.png)
