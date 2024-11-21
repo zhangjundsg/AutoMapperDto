@@ -32,8 +32,8 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
                 var diagnostic = Diagnostic.Create(
                     new DiagnosticDescriptor(
                         id: "Tips001",
-                        title: "Class/Record must be partial",
-                        messageFormat: "The class or record '{0}' using [Mapper<T>] must be declared as partial.",
+                        title: "Class or Record 需要 partial 关键字",
+                        messageFormat: "The class or record '{0}' 在使用[Mapper<T>]映射实体时需要[partial]关键字.",
                         category: "MapperGenerator",
                         DiagnosticSeverity.Error,
                         isEnabledByDefault: true),
