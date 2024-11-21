@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -14,7 +15,7 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
     private readonly static SyntaxHandler _syntaxHandler = new();
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        Debugger.Launch();
+        //Debugger.Launch();
         var provider = context.SyntaxProvider
         .CreateSyntaxProvider(
             predicate: static (node, _) => _syntaxHandler.IsTargetNode(node),
@@ -27,8 +28,7 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
 
             if (typeDeclaration is TypeDeclarationSyntax typeNode && GenerateCode(typeNode, compilation) is var codeSource && !string.IsNullOrEmpty(codeSource))
             {
-                var name = "";
-                ctx.AddSource(name, codeSource!);
+                ctx.AddSource($"{typeNode.Identifier.ValueText}_g.cs", codeSource!);
             }
         });
 
@@ -41,23 +41,32 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
         
         if (mapperAttribute == null)
             return default;
-
-        var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
-
-
+        
         // 提取泛型类型名
         var genericTypeName = _syntaxHandler.GetGenericTypeFromMapperAttribute(mapperAttribute);
 
         if (genericTypeName == null)
             return default;
-        
-        // 获取 T 类型的非私有属性
-        //var properties = _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName);
-        foreach (var item in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName))
+
+        var nameSpace = _syntaxHandler.GetNamespace(syntax);
+        var modifiers = string.Join(" ", syntax.Modifiers.Select(o => o.ValueText.ToLower()));
+        var keyword = syntax.Keyword.ValueText;
+        var className = syntax.Identifier.ValueText;
+
+        var text = new StringBuilder();
+        text.AppendLine($"namespace {nameSpace ?? "AutoMapperDto.SourceGenerator"};");
+        text.AppendLine($"{modifiers} {keyword} {className}");
+        text.AppendLine("{");
+
+        // 获取 T 类型的公共属性
+        foreach (var property in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName).Where(o=>o.DeclaredAccessibility == Accessibility.Public ))
         {
-            var a = item.Name;
-            var t = item.Type.ToDisplayString();
+            var propertyName = property.Name;
+            var propertyType = property.Type.ToDisplayString();
+            text.AppendLine($@"   public {propertyType} {propertyName} {{ get; set;}}");
         }
-        return default;
+        text.AppendLine("}");
+
+        return text.ToString();
     }
 }

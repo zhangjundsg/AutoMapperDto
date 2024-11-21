@@ -6,13 +6,28 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperDto.SourceGenerator;
 
+/// <summary>
+/// 语法处理
+/// </summary>
+
 internal sealed class SyntaxHandler
 {
+    /// <summary>
+    /// 是否目标节点
+    /// </summary>
+    /// <param name="syntaxNode"></param>
+    /// <returns></returns>
     public bool IsTargetNode(SyntaxNode syntaxNode)
     {
         return syntaxNode is TypeDeclarationSyntax node &&
                 node.AttributeLists.Any(attr => attr.Attributes.Any(a => a.Name.ToString().Contains("Mapper")));
     }
+    /// <summary>
+    /// 获取映射Attribute<T>
+    /// </summary>
+    /// <param name="typeNode"></param>
+    /// <param name="attributeName"></param>
+    /// <returns></returns>
     public AttributeSyntax? GetMapperAttribute(TypeDeclarationSyntax typeNode, string attributeName = "Mapper")
     {
         foreach (var attributeList in typeNode.AttributeLists)
@@ -29,6 +44,11 @@ internal sealed class SyntaxHandler
         }
         return default;
     }
+    /// <summary>
+    /// 获取映射Mapper<T> T类型名称
+    /// </summary>
+    /// <param name="attribute"></param>
+    /// <returns></returns>
     public string? GetGenericTypeFromMapperAttribute(AttributeSyntax attribute)
     {
         if (attribute.Name is GenericNameSyntax genericNameSyntax &&
@@ -38,17 +58,35 @@ internal sealed class SyntaxHandler
         }
         return default;
     }
+    /// <summary>
+    /// 获取类型属性
+    /// </summary>
+    /// <param name="compilation"></param>
+    /// <param name="typeName"></param>
+    /// <returns></returns>
     public IEnumerable<IPropertySymbol> GetNonPrivateProperties(Compilation compilation, string typeName)
     {
         // 根据类型名获取类型符号
-        var typeSymbol = compilation.GetSymbolsWithName(typeName, SymbolFilter.Type).FirstOrDefault() as ITypeSymbol;
+        if (compilation.GetSymbolsWithName(typeName, SymbolFilter.Type).FirstOrDefault() is not ITypeSymbol typeSymbol)
+            return [];
 
-        if (typeSymbol == null)
-            return Enumerable.Empty<IPropertySymbol>();
+        // 筛选属性
+        return typeSymbol.GetMembers().OfType<IPropertySymbol>();
+    }
+    /// <summary>
+    /// 获取namespace
+    /// </summary>
+    /// <param name="typeDeclaration"></param>
+    /// <returns></returns>
+    public string? GetNamespace(TypeDeclarationSyntax typeDeclaration)
+    {
+        var fileScopedNamespaceNode = typeDeclaration.AncestorsAndSelf()
+        .OfType<FileScopedNamespaceDeclarationSyntax>()
+        .FirstOrDefault();
 
-        // 筛选非私有属性
-        return typeSymbol.GetMembers()
-            .OfType<IPropertySymbol>(); // 只获取属性
-            //.Where(prop => prop.DeclaredAccessibility != Accessibility.Private); // 筛选非私有
+        if (fileScopedNamespaceNode != null)
+            return fileScopedNamespaceNode.Name.ToString();
+
+        return default;
     }
 }
