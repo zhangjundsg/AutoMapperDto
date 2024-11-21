@@ -21,3 +21,6 @@ public partial record MyrecordDto();
 
 [Mapper<MyClass>]
 public sealed partial class MyClassDto;
+
+
+

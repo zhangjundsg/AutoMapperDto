@@ -26,9 +26,29 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
         {
             var (typeDeclaration, compilation) = source;
 
-            if (typeDeclaration is TypeDeclarationSyntax typeNode && GenerateCode(typeNode, compilation) is var codeSource && !string.IsNullOrEmpty(codeSource))
+
+            if (!typeDeclaration!.Modifiers.Any(SyntaxKind.PartialKeyword))
             {
-                ctx.AddSource($"{typeNode.Identifier.ValueText}_g.cs", codeSource!);
+                var diagnostic = Diagnostic.Create(
+                    new DiagnosticDescriptor(
+                        id: "Tips001",
+                        title: "Class/Record must be partial",
+                        messageFormat: "The class or record '{0}' using [Mapper<T>] must be declared as partial.",
+                        category: "MapperGenerator",
+                        DiagnosticSeverity.Error,
+                        isEnabledByDefault: true),
+                    typeDeclaration.GetLocation(),
+                    typeDeclaration.Identifier.Text);
+
+                ctx.ReportDiagnostic(diagnostic);
+            }
+
+            if (typeDeclaration is TypeDeclarationSyntax typeNode)
+            {
+                var codeSource = GenerateCode(typeNode, compilation);
+
+                if (!string.IsNullOrEmpty(codeSource))
+                    ctx.AddSource($"{typeNode.Identifier.ValueText}_g.cs", codeSource!);
             }
         });
 
@@ -61,7 +81,7 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
         // 获取 T 类型的公共属性
         foreach (var property in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName).Where(o=>o.DeclaredAccessibility == Accessibility.Public ))
         {
-            text.AppendLine($@"   public {property.Name} {property.Type.ToDisplayString()} {{ get; set;}}");
+            text.AppendLine($@"   public {property.Type.ToDisplayString()} {property.Name} {{ get; set; }}");
         }
         text.AppendLine("}");
 
