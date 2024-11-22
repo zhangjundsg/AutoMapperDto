@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace AutoMapperDto.SourceGenerator;
 
-[Generator(LanguageNames.CSharp)]
+[Generator(firstLanguage: LanguageNames.CSharp)]
 internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
 {
     private readonly static SyntaxHandler _syntaxHandler = new();
@@ -25,23 +25,6 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(provider.Combine(context.CompilationProvider), (ctx, source) =>
         {
             var (typeDeclaration, compilation) = source;
-
-
-            if (!typeDeclaration!.Modifiers.Any(SyntaxKind.PartialKeyword))
-            {
-                var diagnostic = Diagnostic.Create(
-                    new DiagnosticDescriptor(
-                        id: "Tips001",
-                        title: "Class or Record 需要 partial 关键字",
-                        messageFormat: "The class or record '{0}' 在使用[Mapper<T>]映射实体时需要[partial]关键字.",
-                        category: "MapperGenerator",
-                        DiagnosticSeverity.Error,
-                        isEnabledByDefault: true),
-                    typeDeclaration.GetLocation(),
-                    typeDeclaration.Identifier.Text);
-
-                ctx.ReportDiagnostic(diagnostic);
-            }
 
             if (typeDeclaration is TypeDeclarationSyntax typeNode)
             {

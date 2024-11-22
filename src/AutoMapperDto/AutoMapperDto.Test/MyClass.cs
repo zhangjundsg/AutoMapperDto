@@ -22,4 +22,8 @@ public partial record MyrecordDto();
 [Mapper<MyClass>]
 public sealed partial class MyClassDto;
 
+[Mapper<MyClass>]
+public partial record MyAAA();
 
+[Mapper<MyClass>]
+public partial class BBB;
