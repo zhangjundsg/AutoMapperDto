@@ -15,7 +15,7 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
     private readonly static SyntaxHandler _syntaxHandler = new();
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        Debugger.Launch();
+        //Debugger.Launch();
         var provider = context.SyntaxProvider
         .CreateSyntaxProvider(
             predicate: static (node, _) => _syntaxHandler.IsTargetNode(node),
@@ -46,7 +46,7 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
             return default;
 
         // 提取泛型类型名
-        var genericTypeName = _syntaxHandler.GetGenericTypeFromMapperAttribute(mapperAttribute);
+        var genericTypeName = _syntaxHandler.GetGenericTypeFromMapperAttribute(mapperAttribute,compilation);
 
         if (genericTypeName == null)
             return default;
@@ -64,7 +64,12 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
         text.AppendLine($"{modifiers} {keyword} {className}");
         text.AppendLine("{");
 
-        var currentHasProperty = _syntaxHandler.GetNonPrivateProperties(compilation, syntax.Identifier.ValueText);
+        // 当前节点自身语法信息
+        var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
+        // 符号信息
+        var typeSymbol = semanticModel.GetDeclaredSymbol(syntax);
+
+        var currentHasProperty = _syntaxHandler.GetNonPrivateProperties(compilation, typeSymbol?.ToDisplayString() ?? syntax.Identifier.ValueText);
         var ignoreAttributeSymbol = compilation.GetTypeByMetadataName("AutoMapperDto.Ignore");
 
         // 获取 T 类型的公共属性

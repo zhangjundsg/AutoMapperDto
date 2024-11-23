@@ -50,12 +50,16 @@ internal sealed class SyntaxHandler
     /// </summary>
     /// <param name="attribute"></param>
     /// <returns></returns>
-    public string? GetGenericTypeFromMapperAttribute(AttributeSyntax attribute)
+    public string? GetGenericTypeFromMapperAttribute(AttributeSyntax attribute, Compilation compilation)
     {
         if (attribute.Name is GenericNameSyntax genericNameSyntax &&
             genericNameSyntax.TypeArgumentList.Arguments.Count == 1)
         {
-            return genericNameSyntax.TypeArgumentList.Arguments[0].ToString();
+            var typeSyntax = genericNameSyntax.TypeArgumentList.Arguments[0];
+            var semanticModel = compilation.GetSemanticModel(typeSyntax.SyntaxTree);
+
+            if (semanticModel.GetSymbolInfo(typeSyntax).Symbol is INamedTypeSymbol typeSymbol)
+                return typeSymbol.ToDisplayString();
         }
         return default;
     }

@@ -1,3 +1,5 @@
+using AutoMapperDto.Other;
+
 namespace AutoMapperDto.Test;
 
 public class MyClass
@@ -11,8 +13,18 @@ public class MyClass
 }
 
 
-[Mapper<MyClass>]
+[Mapper<AutoMapperDto.Test.MyClass>]
 public partial class MyrecordDto;
 
+[Mapper<MyClass>]
+public partial class MyrecordCCC
+{
+    public int Age { get; set; } 
+};
+[Mapper<MyClass>]
+public partial record Mysds(int Age);
+
+[Mapper<MyClass_2>]
+public partial class Test;
 
 
