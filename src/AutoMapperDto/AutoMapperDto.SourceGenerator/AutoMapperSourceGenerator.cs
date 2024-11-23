@@ -41,10 +41,10 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
     {
         // 获取 Mapper<T> 属性
         var mapperAttribute = _syntaxHandler.GetMapperAttribute(syntax);
-        
+
         if (mapperAttribute == null)
             return default;
-        
+
         // 提取泛型类型名
         var genericTypeName = _syntaxHandler.GetGenericTypeFromMapperAttribute(mapperAttribute);
 
@@ -52,19 +52,25 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
             return default;
 
         var nameSpace = _syntaxHandler.GetNamespace(syntax);
-        var modifiers = string.Join(" ", syntax.Modifiers.Select(o => o.ValueText.ToLower()));
+        var modifiers = string.Join(" ", syntax.Modifiers.Select(o => o.ValueText));
         var keyword = syntax.Keyword.ValueText;
         var className = syntax.Identifier.ValueText;
+
+        if (!syntax.Modifiers.Any(o => o.ValueText.Contains("partial")))
+            return default;
 
         var text = new StringBuilder();
         text.AppendLine($"namespace {nameSpace ?? "AutoMapperDto.SourceGenerator"};");
         text.AppendLine($"{modifiers} {keyword} {className}");
         text.AppendLine("{");
 
+        var currentHasProperty = _syntaxHandler.GetNonPrivateProperties(compilation, syntax.Identifier.ValueText);
+
         // 获取 T 类型的公共属性
-        foreach (var property in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName).Where(o=>o.DeclaredAccessibility == Accessibility.Public ))
+        foreach (var property in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName).Where(o => o.DeclaredAccessibility == Accessibility.Public))
         {
-            text.AppendLine($@"   public {property.Type.ToDisplayString()} {property.Name} {{ get; set; }}");
+            if (!currentHasProperty.Any(x => x.Name.Equals(property.Name)))
+                text.AppendLine($@"   public {property.Type.ToDisplayString()} {property.Name} {{ get; set; }}");
         }
         text.AppendLine("}");
 

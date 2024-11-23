@@ -8,22 +8,21 @@ public class MyClass
 
     public void A()
     {
-        var a = new MyClassDto { Age = 10, Name = "张三", List = [] };
-        var b = new MyrecordDto { age = 12, name = "里斯" };
     }
 }
 
 public record Myrecord(int age,string name);
 
 [Mapper<Myrecord>]
-public partial record MyrecordDto();
+public partial record MyrecordDto(int age);
 
 
 [Mapper<MyClass>]
-public sealed partial class MyClassDto;
+public sealed partial class MyClassDto
+{
+}
 
 [Mapper<MyClass>]
-public partial record MyAAA();
+public partial class M { }
 
-[Mapper<MyClass>]
-public partial class BBB;
+
