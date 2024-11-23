@@ -30,17 +30,20 @@ internal sealed class SyntaxHandler
     /// <param name="typeNode"></param>
     /// <param name="attributeName"></param>
     /// <returns></returns>
-    public AttributeSyntax? GetMapperAttribute(TypeDeclarationSyntax typeNode, Compilation compilation)
+    public AttributeSyntax? GetMapperAttribute(TypeDeclarationSyntax typeNode,SemanticModel semanticModel)
     {
-        foreach (var attributeList in typeNode.AttributeLists)
+        // 遍历所有属性
+        foreach (var attribute in typeNode.AttributeLists.SelectMany(attrList => attrList.Attributes))
         {
-            foreach (var attribute in attributeList.Attributes)
-            {
-                var attrName = attribute.Name.ToString();
-                var attrNamespace = compilation.GetSemanticModel(attribute.SyntaxTree)?.GetSymbolInfo(attribute).Symbol?.ContainingNamespace.ToDisplayString() ?? "";
+            // 获取符号
+            if (semanticModel.GetSymbolInfo(attribute).Symbol is not INamedTypeSymbol symbol)
+                continue;
 
-                if (attrNamespace.Equals(_attributeNamespace) && attrName.StartsWith(_attrubuteName, StringComparison.Ordinal))
-                    return attribute;
+            // 检查命名空间和名称是否匹配
+            if (symbol.ContainingNamespace.ToDisplayString() == _attributeNamespace &&
+                symbol.Name.StartsWith(_attrubuteName, StringComparison.Ordinal))
+            {
+                return attribute;
             }
         }
         return default;

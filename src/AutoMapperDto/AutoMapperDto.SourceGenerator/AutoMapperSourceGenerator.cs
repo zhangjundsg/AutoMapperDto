@@ -39,19 +39,22 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
 
     private string? GenerateCode(TypeDeclarationSyntax syntax, Compilation compilation)
     {
-        // 获取 Mapper<T> 属性
-        var mapperAttribute = _syntaxHandler.GetMapperAttribute(syntax, compilation);
+        // 当前节点自身语义模型
+        var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
+        if (semanticModel == null)
+            return default;
 
+        // 获取 Mapper<T> 属性
+        var mapperAttribute = _syntaxHandler.GetMapperAttribute(syntax, semanticModel);
         if (mapperAttribute == null)
             return default;
 
         // 提取泛型类型名
         var genericTypeName = _syntaxHandler.GetGenericTypeFromMapperAttribute(mapperAttribute,compilation);
-
         if (genericTypeName == null)
             return default;
 
-        var nameSpace = _syntaxHandler.GetNamespace(syntax);
+        var nameSpace = _syntaxHandler.GetNamespace(syntax) ?? "AutoMapperDto.SourceGenerator";
         var modifiers = string.Join(" ", syntax.Modifiers.Select(o => o.ValueText));
         var keyword = syntax.Keyword.ValueText;
         var className = syntax.Identifier.ValueText;
@@ -59,22 +62,21 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
         if (!syntax.Modifiers.Any(o => o.ValueText.Contains("partial")))
             return default;
 
-        var text = new StringBuilder();
-        text.AppendLine($"namespace {nameSpace ?? "AutoMapperDto.SourceGenerator"};");
-        text.AppendLine($"{modifiers} {keyword} {className}");
-        text.AppendLine("{");
-
-        // 当前节点自身语法信息
-        var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
-        // 符号信息
+        // 当前节点符号信息
         var typeSymbol = semanticModel.GetDeclaredSymbol(syntax);
-
         var currentHasProperty = _syntaxHandler.GetNonPrivateProperties(compilation, typeSymbol?.ToDisplayString() ?? syntax.Identifier.ValueText);
         var ignoreAttributeSymbol = compilation.GetTypeByMetadataName("AutoMapperDto.Ignore");
 
+
+        var text = new StringBuilder();
+        text.AppendLine($"namespace {nameSpace};");
+        text.AppendLine($"{modifiers} {keyword} {className}");
+        text.AppendLine("{");
+    
         // 获取 T 类型的公共属性
         foreach (var property in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName).Where(o => o.DeclaredAccessibility == Accessibility.Public))
         {
+            //排除标记Ignore及已存在property
             if (!property.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, ignoreAttributeSymbol)) && !currentHasProperty.Any(x => x.Name.Equals(property.Name)))
             {
                 text.AppendLine($@"   public {property.Type.ToDisplayString()} {property.Name} {{ get; set; }}");

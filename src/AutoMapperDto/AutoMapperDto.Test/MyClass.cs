@@ -1,30 +1,22 @@
-using AutoMapperDto.Other;
-
 namespace AutoMapperDto.Test;
 
 public class MyClass
 {
     public string? Name { get; set; }
     public int Age { get; set; }
-    public int AAAge { get; set; }
     [Ignore]
+    public int AAAge { get; set; }
     public List<string> List { get; set; }
 
 }
 
-
-[Mapper<AutoMapperDto.Test.MyClass>]
-public partial class MyrecordDto;
-
 [Mapper<MyClass>]
-public partial class MyrecordCCC
+public partial class MyClassDto
 {
-    public int Age { get; set; } 
-};
-[Mapper<MyClass>]
-public partial record Mysds(int Age);
-
-[Mapper<MyClass_2>]
-public partial class Test;
-
-
+    public string? Name { get; set; }
+}
+[Mapper<AutoMapperDto.Other.MyClass_2>]
+public partial class MyClassDto2
+{
+    public string? Name { get; set; }
+}

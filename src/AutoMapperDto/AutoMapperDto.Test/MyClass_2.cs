@@ -9,6 +9,6 @@ namespace AutoMapperDto.Other;
 public class MyClass_2
 {
     public string Name { get; set; }
-    [Ignore]
+  
     public int[] MyArr { get; set; }
 }
