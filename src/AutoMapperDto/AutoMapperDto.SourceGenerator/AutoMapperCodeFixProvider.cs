@@ -32,8 +32,7 @@ namespace AutoMapperDto.SourceGenerator
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // 找到目标 TypeDeclarationSyntax
-            var typeDeclaration = root.FindNode(diagnosticSpan) as TypeDeclarationSyntax;
-            if (typeDeclaration == null)
+            if (root.FindNode(diagnosticSpan) is not TypeDeclarationSyntax typeDeclaration)
                 return;
 
             // 注册修复操作

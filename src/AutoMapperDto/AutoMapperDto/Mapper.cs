@@ -2,7 +2,12 @@ using System;
 
 namespace AutoMapperDto;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+/// <summary>
+/// 映射attribute
+/// </summary>
+/// <typeparam name="T">需映射源类型</typeparam>
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class Mapper<T> : Attribute
 {
 

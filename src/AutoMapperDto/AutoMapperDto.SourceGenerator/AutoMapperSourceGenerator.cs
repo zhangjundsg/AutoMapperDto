@@ -15,7 +15,7 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
     private readonly static SyntaxHandler _syntaxHandler = new();
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        //Debugger.Launch();
+        Debugger.Launch();
         var provider = context.SyntaxProvider
         .CreateSyntaxProvider(
             predicate: static (node, _) => _syntaxHandler.IsTargetNode(node),
@@ -40,7 +40,7 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
     private string? GenerateCode(TypeDeclarationSyntax syntax, Compilation compilation)
     {
         // 获取 Mapper<T> 属性
-        var mapperAttribute = _syntaxHandler.GetMapperAttribute(syntax);
+        var mapperAttribute = _syntaxHandler.GetMapperAttribute(syntax, compilation);
 
         if (mapperAttribute == null)
             return default;
@@ -65,12 +65,16 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
         text.AppendLine("{");
 
         var currentHasProperty = _syntaxHandler.GetNonPrivateProperties(compilation, syntax.Identifier.ValueText);
+        var ignoreAttributeSymbol = compilation.GetTypeByMetadataName("AutoMapperDto.Ignore");
 
         // 获取 T 类型的公共属性
         foreach (var property in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName).Where(o => o.DeclaredAccessibility == Accessibility.Public))
         {
-            if (!currentHasProperty.Any(x => x.Name.Equals(property.Name)))
+            if (!property.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, ignoreAttributeSymbol)) && !currentHasProperty.Any(x => x.Name.Equals(property.Name)))
+            {
                 text.AppendLine($@"   public {property.Type.ToDisplayString()} {property.Name} {{ get; set; }}");
+            }
+               
         }
         text.AppendLine("}");
 

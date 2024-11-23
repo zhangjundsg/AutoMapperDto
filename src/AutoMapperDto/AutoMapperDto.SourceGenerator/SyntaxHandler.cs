@@ -12,6 +12,8 @@ namespace AutoMapperDto.SourceGenerator;
 
 internal sealed class SyntaxHandler
 {
+    private const string _attributeNamespace = "AutoMapperDto";
+    private const string _attrubuteName = "Mapper";
     /// <summary>
     /// 是否目标节点
     /// </summary>
@@ -20,7 +22,7 @@ internal sealed class SyntaxHandler
     public bool IsTargetNode(SyntaxNode syntaxNode)
     {
         return syntaxNode is TypeDeclarationSyntax node &&
-                node.AttributeLists.Any(attr => attr.Attributes.Any(a => a.Name.ToString().Contains("Mapper")));
+                node.AttributeLists.Any(attr => attr.Attributes.Any(a => a.Name.ToString().Contains(_attrubuteName)));
     }
     /// <summary>
     /// 获取映射Attribute<T>
@@ -28,18 +30,17 @@ internal sealed class SyntaxHandler
     /// <param name="typeNode"></param>
     /// <param name="attributeName"></param>
     /// <returns></returns>
-    public AttributeSyntax? GetMapperAttribute(TypeDeclarationSyntax typeNode, string attributeName = "Mapper")
+    public AttributeSyntax? GetMapperAttribute(TypeDeclarationSyntax typeNode, Compilation compilation)
     {
         foreach (var attributeList in typeNode.AttributeLists)
         {
             foreach (var attribute in attributeList.Attributes)
             {
                 var attrName = attribute.Name.ToString();
+                var attrNamespace = compilation.GetSemanticModel(attribute.SyntaxTree)?.GetSymbolInfo(attribute).Symbol?.ContainingNamespace.ToDisplayString() ?? "";
 
-                if (attrName.StartsWith(attributeName, StringComparison.Ordinal) && attrName.Contains(attributeName))
-                {
+                if (attrNamespace.Equals(_attributeNamespace) && attrName.StartsWith(_attrubuteName, StringComparison.Ordinal))
                     return attribute;
-                }
             }
         }
         return default;
@@ -67,7 +68,7 @@ internal sealed class SyntaxHandler
     public IEnumerable<IPropertySymbol> GetNonPrivateProperties(Compilation compilation, string typeName)
     {
         // 根据类型名获取类型符号
-        if (compilation.GetSymbolsWithName(typeName, SymbolFilter.Type).FirstOrDefault() is not ITypeSymbol typeSymbol)
+        if (compilation.GetTypeByMetadataName(typeName) is not ITypeSymbol typeSymbol)
             return [];
 
         // 筛选属性

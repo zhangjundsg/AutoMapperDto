@@ -4,25 +4,15 @@ public class MyClass
 {
     public string? Name { get; set; }
     public int Age { get; set; }
+    public int AAAge { get; set; }
+    [Ignore]
     public List<string> List { get; set; }
 
-    public void A()
-    {
-    }
 }
-
-public record Myrecord(int age,string name);
-
-[Mapper<Myrecord>]
-public partial record MyrecordDto(int age);
 
 
 [Mapper<MyClass>]
-public sealed partial class MyClassDto
-{
-}
+public partial class MyrecordDto;
 
-[Mapper<MyClass>]
-public partial class M { }
 
 
