@@ -17,15 +17,6 @@ public class MyClass
 
 [Mapper<MyClass>]
 public partial class MyClassDto;
-
-
-//生成dto
-public partial class MyClassDto
-{
-    public string? Name { get; set; }
-    public int Age { get; set; }
-    public List<string> List { get; set; }
-}
 ```
 ### 2 在映射时排除某属性，在源对象属性上标记`Ignore`
 ```
@@ -35,6 +26,32 @@ public class MyClass
     public int Age { get; set; }
     [Ignore]
     public List<string> List { get; set; }
+}
+```
+### 3 使用`As{target}`完成源对象转换为目标对象
+```
+public class MapperTest
+{
+    [Mapper<MyClass>]
+    public partial class MyClassDto;
+
+    [Fact]
+    public void Mapper_Test()
+    {
+        MyClass myClass = new()
+        {
+            Name = "Test",
+            Age = 12,
+            address = "china",
+            List = ["1", "2", "3"]
+        };
+        var dto = myClass.AsMyClassDto();
+
+        Assert.Equal("Test", dto.Name);
+        Assert.Equal(12, dto.Age);
+        Assert.Equal(3, dto.List.Count);
+
+    }
 }
 ```
 

@@ -30,18 +30,18 @@ internal sealed class SyntaxHandler
     /// <param name="typeNode"></param>
     /// <param name="attributeName"></param>
     /// <returns></returns>
-    public AttributeSyntax? GetMapperAttribute(TypeDeclarationSyntax typeNode,SemanticModel semanticModel)
+    public AttributeSyntax? GetMapperAttribute(TypeDeclarationSyntax typeNode, SemanticModel semanticModel)
     {
         // 遍历所有属性
         foreach (var attribute in typeNode.AttributeLists.SelectMany(attrList => attrList.Attributes))
         {
             // 获取符号
-            if (semanticModel.GetSymbolInfo(attribute).Symbol is not INamedTypeSymbol symbol)
+            if (semanticModel.GetSymbolInfo(attribute).Symbol is var symbol && symbol is null)
                 continue;
 
             // 检查命名空间和名称是否匹配
             if (symbol.ContainingNamespace.ToDisplayString() == _attributeNamespace &&
-                symbol.Name.StartsWith(_attrubuteName, StringComparison.Ordinal))
+                symbol.ContainingSymbol.Name == _attrubuteName)
             {
                 return attribute;
             }

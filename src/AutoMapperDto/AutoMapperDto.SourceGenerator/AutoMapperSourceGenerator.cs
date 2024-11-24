@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,8 @@ namespace AutoMapperDto.SourceGenerator;
 [Generator(firstLanguage: LanguageNames.CSharp)]
 internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
 {
+    private const string _ignoreAttribute = "AutoMapperDto.Ignore";
+    private const string _defaultNamespace = "AutoMapperDto.SourceGenerator";
     private readonly static SyntaxHandler _syntaxHandler = new();
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -50,39 +53,67 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
             return default;
 
         // 提取泛型类型名
-        var genericTypeName = _syntaxHandler.GetGenericTypeFromMapperAttribute(mapperAttribute,compilation);
+        var genericTypeName = _syntaxHandler.GetGenericTypeFromMapperAttribute(mapperAttribute, compilation);
         if (genericTypeName == null)
-            return default;
-
-        var nameSpace = _syntaxHandler.GetNamespace(syntax) ?? "AutoMapperDto.SourceGenerator";
-        var modifiers = string.Join(" ", syntax.Modifiers.Select(o => o.ValueText));
-        var keyword = syntax.Keyword.ValueText;
-        var className = syntax.Identifier.ValueText;
-
-        if (!syntax.Modifiers.Any(o => o.ValueText.Contains("partial")))
             return default;
 
         // 当前节点符号信息
         var typeSymbol = semanticModel.GetDeclaredSymbol(syntax);
-        var currentHasProperty = _syntaxHandler.GetNonPrivateProperties(compilation, typeSymbol?.ToDisplayString() ?? syntax.Identifier.ValueText);
-        var ignoreAttributeSymbol = compilation.GetTypeByMetadataName("AutoMapperDto.Ignore");
+        if (typeSymbol == null)
+            return default;
 
+        if (!syntax.Modifiers.Any(o => o.ValueText.Contains("partial")))
+            return default;
+
+        var nameSpace = _syntaxHandler.GetNamespace(syntax) ?? _defaultNamespace;
+        var modifiers = string.Join(" ", syntax.Modifiers.Select(o => o.ValueText));
+        var keyword = syntax.Keyword.ValueText;
+        var className = syntax.Identifier.ValueText;
+
+        //当前类型已有属性
+        var currentHasProperty = _syntaxHandler.GetNonPrivateProperties(compilation, typeSymbol.ToDisplayString());
+        var ignoreAttributeSymbol = compilation.GetTypeByMetadataName(_ignoreAttribute);
 
         var text = new StringBuilder();
         text.AppendLine($"namespace {nameSpace};");
         text.AppendLine($"{modifiers} {keyword} {className}");
         text.AppendLine("{");
-    
-        // 获取 T 类型的公共属性
-        foreach (var property in _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName).Where(o => o.DeclaredAccessibility == Accessibility.Public))
+
+        // 获取 T 类型的公共属性 排除标记Ignore及已存在property
+        var properties = _syntaxHandler.GetNonPrivateProperties(compilation, genericTypeName)
+        .Where(p => p.DeclaredAccessibility == Accessibility.Public
+        && !p.GetAttributes().Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, ignoreAttributeSymbol))
+        && !currentHasProperty.Any(existing => existing.Name.Equals(p.Name)));
+
+        // 添加属性
+        foreach (var property in properties)
         {
-            //排除标记Ignore及已存在property
-            if (!property.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, ignoreAttributeSymbol)) && !currentHasProperty.Any(x => x.Name.Equals(property.Name)))
-            {
-                text.AppendLine($@"   public {property.Type.ToDisplayString()} {property.Name} {{ get; set; }}");
-            }
-               
+            text.AppendLine($"   // < generate from=\"{typeSymbol.ToDisplayString()}.{property.Name}\" >");
+            text.AppendLine($@"   public {property.Type.ToDisplayString()} {property.Name} {{ get; set; }}");
         }
+        text.AppendLine("}");
+
+        // 添加映射
+        text.AppendLine(GenerateMapperExtensions(source: genericTypeName, target: className, properties));
+
+        return text.ToString();
+    }
+
+    private string GenerateMapperExtensions(string source, string target, IEnumerable<IPropertySymbol> properties)
+    {
+        var text = new StringBuilder();
+        text.AppendLine("public static partial class MapperExtensions");
+        text.AppendLine("{");
+        text.AppendLine($"   public static {target} As{target}(this {source} @source)");
+        text.AppendLine("   {");
+        text.AppendLine($"       return new {target}()");
+        text.AppendLine("       {");
+        foreach (var property in properties)
+        {
+            text.AppendLine($"           {property.Name} = @source.{property.Name},");
+        }
+        text.AppendLine("       };");
+        text.AppendLine("   }");
         text.AppendLine("}");
 
         return text.ToString();
