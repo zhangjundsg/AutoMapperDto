@@ -102,19 +102,21 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
     private string GenerateMapperExtensions(string source, string target, IEnumerable<IPropertySymbol> properties)
     {
         var text = new StringBuilder();
-        text.AppendLine("public static partial class MapperExtensions");
-        text.AppendLine("{");
-        text.AppendLine($"   public static {target} As{target}(this {source} @source)");
-        text.AppendLine("   {");
-        text.AppendLine($"       return new {target}()");
-        text.AppendLine("       {");
+        text.AppendLine("public static partial class MapperExtensions")
+            .AppendLine("{")
+            .AppendLine($"   public static {target} As{target}(this {source} @source)")
+            .AppendLine("   {")
+            .AppendLine($"       return new {target}()")
+            .AppendLine("       {");
+
         foreach (var property in properties)
         {
             text.AppendLine($"           {property.Name} = @source.{property.Name},");
         }
-        text.AppendLine("       };");
-        text.AppendLine("   }");
-        text.AppendLine("}");
+
+        text.AppendLine("       };")
+            .AppendLine("   }")
+            .AppendLine("}");
 
         return text.ToString();
     }

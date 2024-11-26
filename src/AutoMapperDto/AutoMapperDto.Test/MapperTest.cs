@@ -22,4 +22,16 @@ public class MapperTest
         Assert.Equal(3, dto.List.Count);
 
     }
+    [Fact]
+    public void Mapper_Config()
+    {
+        MyClass myClass = new()
+        {
+            Name = "Test",
+            Age = 12,
+            address = "china",
+            List = ["1", "2", "3"]
+        };
+        var a = 1;
+    }
 }
