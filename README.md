@@ -59,4 +59,4 @@ public class MapperTest
 
 实体需要用`partial`关键字修饰为分部类：
 
-![tips](https://github.com/zhangjundsg/zhangjundsg/blob/main/tips.png)
+![tips](https://github.com/zhangjundsg/zhangjundsg/blob/main/img/tips.png)
