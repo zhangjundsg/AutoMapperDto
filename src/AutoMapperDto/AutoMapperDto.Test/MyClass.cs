@@ -2,6 +2,7 @@ namespace AutoMapperDto.Test;
 
 public class MyClass
 {
+    [MapperAs("ceshi")]
     public string? Name { get; set; }
     public int Age { get; set; }
     public string address { get; set; }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace AutoMapperDto
 {
-    public static class AutoMapperConfig
+    public class AutoMapperConfig
     {
         private static readonly Dictionary<string, Dictionary<string, string>> _mappings = new();
 

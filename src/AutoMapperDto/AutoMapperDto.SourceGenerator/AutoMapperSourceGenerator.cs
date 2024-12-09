@@ -14,7 +14,10 @@ namespace AutoMapperDto.SourceGenerator;
 internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
 {
     private const string _ignoreAttribute = "AutoMapperDto.Ignore";
+    private const string _mapperAsAttribute = "AutoMapperDto.MapperAs";
     private const string _defaultNamespace = "AutoMapperDto.SourceGenerator";
+    private INamedTypeSymbol? _ignoreAttributeSymbol;
+    private INamedTypeSymbol? _mapperAsSymbol;
     private readonly static SyntaxHandler _syntaxHandler = new();
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -72,7 +75,8 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
 
         //当前类型已有属性
         var currentHasProperty = _syntaxHandler.GetNonPrivateProperties(compilation, typeSymbol.ToDisplayString());
-        var ignoreAttributeSymbol = compilation.GetTypeByMetadataName(_ignoreAttribute);
+        var ignoreAttributeSymbol = _ignoreAttributeSymbol ??= compilation.GetTypeByMetadataName(_ignoreAttribute);
+        var mapperAsAttributeSymbol = _mapperAsSymbol ??= compilation.GetTypeByMetadataName(_mapperAsAttribute);
 
         var text = new StringBuilder();
         text.AppendLine($"namespace {nameSpace};");
@@ -85,21 +89,27 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
         && !p.GetAttributes().Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, ignoreAttributeSymbol))
         && !currentHasProperty.Any(existing => existing.Name.Equals(p.Name)));
 
+        var mapperDic = new Dictionary<string, string>();
         // 添加属性
         foreach (var property in properties)
         {
+            var mapperAsAttr = property.GetAttributes().FirstOrDefault(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, mapperAsAttributeSymbol));
+
+            if ((string?)mapperAsAttr?.ConstructorArguments[0].Value is var name && name is not null)
+                mapperDic.Add(property.Name, name);
+
             text.AppendLine($"   // < generate from=\"{typeSymbol.ToDisplayString()}.{property.Name}\" >");
-            text.AppendLine($@"   public {property.Type.ToDisplayString()} {property.Name} {{ get; set; }}");
+            text.AppendLine($@"   public {property.Type.ToDisplayString()} {name ?? property.Name} {{ get; set; }}");
         }
         text.AppendLine("}");
 
         // 添加映射
-        text.AppendLine(GenerateMapperExtensions(source: genericTypeName, target: className, properties));
+        text.AppendLine(GenerateMapperExtensions(source: genericTypeName, target: className, properties, mapperDic));
 
         return text.ToString();
     }
 
-    private string GenerateMapperExtensions(string source, string target, IEnumerable<IPropertySymbol> properties)
+    private string GenerateMapperExtensions(string source, string target, IEnumerable<IPropertySymbol> properties, Dictionary<string, string> mapperName)
     {
         var text = new StringBuilder();
         text.AppendLine("public static partial class MapperExtensions")
@@ -111,7 +121,8 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
 
         foreach (var property in properties)
         {
-            text.AppendLine($"           {property.Name} = @source.{property.Name},");
+            _ = mapperName.TryGetValue(property.Name, out string? name);
+            text.AppendLine($"           {name ?? property.Name} = @source.{property.Name},");
         }
 
         text.AppendLine("       };")
