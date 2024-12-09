@@ -47,22 +47,22 @@ internal sealed class AutoMapperSourceGenerator : IIncrementalGenerator
     {
         // 当前节点自身语义模型
         var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
-        if (semanticModel == null)
+        if (semanticModel is null)
             return default;
 
         // 获取 Mapper<T> 属性
         var mapperAttribute = _syntaxHandler.GetMapperAttribute(syntax, semanticModel);
-        if (mapperAttribute == null)
+        if (mapperAttribute is null)
             return default;
 
         // 提取泛型类型名
         var genericTypeName = _syntaxHandler.GetGenericTypeFromMapperAttribute(mapperAttribute, compilation);
-        if (genericTypeName == null)
+        if (genericTypeName is null)
             return default;
 
         // 当前节点符号信息
         var typeSymbol = semanticModel.GetDeclaredSymbol(syntax);
-        if (typeSymbol == null)
+        if (typeSymbol is null)
             return default;
 
         if (!syntax.Modifiers.Any(o => o.ValueText.Contains("partial")))

@@ -9,6 +9,6 @@ namespace AutoMapperDto;
 /// </summary>
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-public class Ignore : Attribute
+public sealed class Ignore : Attribute
 {
 }

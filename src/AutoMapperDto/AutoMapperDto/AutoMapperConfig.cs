@@ -7,7 +7,7 @@ namespace AutoMapperDto
 {
     public class AutoMapperConfig
     {
-        private static readonly Dictionary<string, Dictionary<string, string>> _mappings = new();
+        private static readonly Dictionary<string, Dictionary<string, string>> _mappings = [];
 
         // 配置映射规则
         public static void Map<TSource, TDestination>(Expression<Func<TSource, object>> sourceProperty, Expression<Func<TDestination, object>> destinationProperty)

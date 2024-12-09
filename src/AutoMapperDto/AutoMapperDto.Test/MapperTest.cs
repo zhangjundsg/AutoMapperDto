@@ -18,12 +18,12 @@ public class MapperTest
         {
             Name = "Test",
             Age = 12,
-            address = "china",
+            Address = "china",
             List = ["1", "2", "3"]
         };
         var dto = myClass.AsMyClassDto();
 
-        Assert.Equal("Test", dto.ceshi);
+        Assert.Equal("Test", dto.Name);
         Assert.Equal(12, dto.Age);
         Assert.Equal(3, dto.List.Count);
 
@@ -35,7 +35,7 @@ public class MapperTest
         {
             Name = "Test",
             Age = 12,
-            address = "china",
+            Address = "china",
             List = ["1", "2", "3"]
         };
         var a = 1;
