@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
@@ -7,28 +8,32 @@ namespace AutoMapperDto
 {
     public class AutoMapperConfig
     {
-        private static readonly Dictionary<string, Dictionary<string, string>> _mappings = [];
+        private static readonly Lazy<AutoMapperConfig> _config = new(() => new AutoMapperConfig());
+        public static AutoMapperConfig Config => _config.Value;
+
+        private readonly ConcurrentDictionary<Type, Dictionary<string, string>> _mappings = [];
+        private AutoMapperConfig() { }
 
         // 配置映射规则
-        public static void Map<TSource, TDestination>(Expression<Func<TSource, object>> sourceProperty, Expression<Func<TDestination, object>> destinationProperty)
+        public AutoMapperConfig Map<TSource, TDestination>(Expression<Func<TSource, object>> sourceProperty, Expression<Func<TDestination, object>> destinationProperty)
+            where TDestination : class
+            where TSource : class
         {
             var sourcePropertyName = GetPropertyName(sourceProperty);
             var destinationPropertyName = GetPropertyName(destinationProperty);
 
             if (string.IsNullOrEmpty(sourcePropertyName) || string.IsNullOrEmpty(destinationPropertyName))
-                return;
+                throw new ArgumentNullException("属性名称为空");
 
-            var sourceType = typeof(TSource).FullName;
+            _mappings.AddOrUpdate(typeof(TSource), _ => new Dictionary<string, string> { { sourcePropertyName!, destinationPropertyName! } },
+            (_, mappingDict) =>
+            {
+                mappingDict[sourcePropertyName!] = destinationPropertyName!;
+                return mappingDict;
+            });
 
-            if (!_mappings.ContainsKey(sourceType))
-                _mappings[sourceType] = [];
-
-            _mappings[sourceType][sourcePropertyName!] = destinationPropertyName!;
+            return this;
         }
-
-        // 获取映射规则
-        public static Dictionary<string, string>? GetMappings(string sourceType) =>
-            _mappings.TryGetValue(sourceType, out var dic) ? dic : default;
 
         /// <summary>
         /// 获取属性名称
